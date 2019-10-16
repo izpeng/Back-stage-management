@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cy.pj.sys.dao.SysUserDao">
+ <select id="getRowCount"
+            resultType="int">
+          select count(*) 
+          from sys_users
+          <include refid="queryWhereId"/>
+    </select>
+    <sql id="queryWhereId">
+          <where>
+            <if test="username!=null and username!=''">
+               username like concat("%",#{username},"%")
+            </if>
+          </where>
+    </sql>
+    
+    
+    <select id="findPageObjects"
+           resultMap="sysUserDeptVo">
+           select *
+           from sys_users
+           <include refid="queryWhereId"/>
+           order by createdTime desc
+           limit #{startIndex},#{pageSize}
+   </select>
+    <resultMap type="com.cy.pj.sys.vo.SysUserDeptVo" 
+              id="sysUserDeptVo">
+            <!-- 一般应用于many2one或one2one做关联查询
+                  在当前应用是基于deptId查询部门信息并将其
+                 存储到SysUserDeptVo对象的sysDept属性中。
+             -->
+            <association property="sysDept"
+                       column="deptId"
+                       select="com.cy.pj.sys.dao.SysDeptDao.findById">
+            </association>  
+   </resultMap>
+   <update id="validById">
+       update sys_users
+       set valid=#{valid},
+           modifiedUser=#{modifiedUser},
+           modifiedTime=now()
+       where id=#{id}
+   </update>
+   
+   <insert id="insertObject"
+           parameterType="com.cy.pj.sys.entity.SysUser"
+           useGeneratedKeys="true"
+           keyProperty="id">
+      insert into sys_users
+      (username,password,deptId,email,mobile,salt,valid,
+      createdTime,modifiedTime,createdUser,modifiedUser)
+      values
+    (#{username},#{password},#{deptId},#{email},#{mobile},#{salt},#{valid},
+      now(),now(),#{createdUser},#{modifiedUser})
+   </insert>
+    <select id="findObjectById"
+           parameterType="int"
+           resultMap="sysUserDeptVo">
+           select * 
+           from sys_users   
+           where id=#{id}     
+   </select>
+   <update id="updateObject"
+           parameterType="com.cy.pj.sys.entity.SysUser">
+        update sys_users
+        set username=#{username},
+            mobile=#{mobile},
+            email=#{email},
+            deptId=#{deptId},
+            modifiedTime=now(),
+            modifiedUser=#{modifiedUser}
+         where id=#{id}
+   </update>
+</mapper>

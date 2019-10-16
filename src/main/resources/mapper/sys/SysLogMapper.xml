@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cy.pj.sys.dao.SysLogDao">
+
+	<sql id="queryWhereId">
+		<where>
+			<if test="username!=null and username!=''">
+				username like concat("%",#{username},"%")
+			</if>
+		</where>
+	</sql>
+
+	<select id="getRowCount" resultType="int">
+		select count(*)
+		from sys_Logs
+		<include refid="queryWhereId" />
+	</select>
+
+	<select id="findPageObjects"
+		resultType="com.cy.pj.sys.entity.SysLog">
+		select *
+		from sys_Logs
+		<include refid="queryWhereId" />
+		order by createdTime desc
+		limit #{startIndex},#{pageSize}
+	</select>
+
+
+	<delete id="deleteObjects">
+		delete from sys_Logs
+		<where>
+			<foreach collection="ids" item="id" >
+				or id=#{id}
+			</foreach>
+		</where>
+	</delete>
+
+</mapper>
