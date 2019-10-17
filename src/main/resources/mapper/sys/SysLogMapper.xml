@@ -35,5 +35,10 @@
 			</foreach>
 		</where>
 	</delete>
-
+<insert id="insertObject">
+       insert into sys_logs
+       (username,operation,method,params,time,ip,createdTime)
+       values
+(#{username},#{operation},#{method},#{params},#{time},#{ip},#{createdTime})
+</insert>
 </mapper>

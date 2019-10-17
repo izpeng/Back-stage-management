@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.cy.pj.common.anno.RequiredLog;
 import com.cy.pj.common.exception.ServiceException;
 import com.cy.pj.common.vo.PageObject;
 import com.cy.pj.sys.dao.SysUserDao;
@@ -24,6 +25,7 @@ public class SysUserServiceImpl implements SysUserService {
 	@Autowired
 	private SysUserRoleDao sysUserRoleDao;
 	@Override
+	@RequiredLog
 	public PageObject<SysUserDeptVo> findPageObjects(String username, Integer pageCurrent) {
 		//1.对参数进行校验
 		if(pageCurrent==null||pageCurrent<1)
@@ -42,6 +44,7 @@ public class SysUserServiceImpl implements SysUserService {
 		return new PageObject<>(pageCurrent, pageSize, rowCount, records);
 	}
 	@Override
+	@RequiredLog
 	public int validById(Integer id, Integer valid, String modifiedUser) {
 		//1.合法性验证
 				if(id==null||id<=0)
@@ -58,6 +61,7 @@ public class SysUserServiceImpl implements SysUserService {
 				return rows;
 	}
 	@Override
+	@RequiredLog
 	public int saveObject(SysUser entity, Integer[] roleIds) {
 		long start=System.currentTimeMillis();
     	//log.info("start:"+start);
@@ -91,6 +95,7 @@ public class SysUserServiceImpl implements SysUserService {
     	return rows;
 	}
 	@Override
+	@RequiredLog
 	public Map<String, Object> findObjectById(Integer userId) {
 		//1.合法性验证
 		if(userId==null||userId<=0)
@@ -110,6 +115,7 @@ public class SysUserServiceImpl implements SysUserService {
 		return map;
 	}
 	@Override
+	@RequiredLog
 	public int updateObject(SysUser entity, Integer[] roleIds) {
 		//1.参数有效性验证
 				if(entity==null)

@@ -28,4 +28,5 @@ public interface SysLogDao {
 		      @Param("pageSize")Integer pageSize);
 	
 	int deleteObjects(@Param("ids")Integer...ids);
+	void insertObject(SysLog entity);
 }

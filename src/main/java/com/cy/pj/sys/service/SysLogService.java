@@ -14,4 +14,5 @@ public interface SysLogService {
 			 String username,
 			 Integer pageCurrent);
 	 int deleteObjects(Integer... ids);
+	 void insertObject(SysLog entity);
 }

@@ -10,12 +10,13 @@ server:
     #spring
 spring:
   datasource:
-    url: jdbc:mysql:///jtsys?serverTimezone=GMT
+    url: jdbc:mysql:///jtsys?serverTimezone=GMT%2B8
     username: root
     password: root
   thymeleaf:
     prefix: classpath:/templates/pages/
-    suffix: .html
+    suffix: .html  aop:    proxy-target-class: true
+    
     
     #mybatis
 mybatis:
