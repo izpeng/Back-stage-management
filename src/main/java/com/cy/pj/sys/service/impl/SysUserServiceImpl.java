@@ -7,7 +7,12 @@ import java.util.UUID;
 
 import org.apache.shiro.crypto.hash.SimpleHash;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.cy.pj.common.anno.RequiredLog;
@@ -25,7 +30,8 @@ public class SysUserServiceImpl implements SysUserService {
 	@Autowired
 	private SysUserRoleDao sysUserRoleDao;
 	@Override
-	@RequiredLog
+	@RequiredLog("用户:查询")
+	@Transactional(readOnly = true)
 	public PageObject<SysUserDeptVo> findPageObjects(String username, Integer pageCurrent) {
 		//1.对参数进行校验
 		if(pageCurrent==null||pageCurrent<1)
@@ -43,8 +49,11 @@ public class SysUserServiceImpl implements SysUserService {
 		//4.对查询结果进行封装并返回
 		return new PageObject<>(pageCurrent, pageSize, rowCount, records);
 	}
+	
+	
 	@Override
-	@RequiredLog
+	@RequiredLog("用户:禁用")
+	@Cacheable(value = "userCache")   //返回结果cache   
 	public int validById(Integer id, Integer valid, String modifiedUser) {
 		//1.合法性验证
 				if(id==null||id<=0)
@@ -60,8 +69,23 @@ public class SysUserServiceImpl implements SysUserService {
 				throw new ServiceException("此记录可能已经不存在");
 				return rows;
 	}
+	/**
+当@Transactional注解应用在类上时表示类中所有方法启动事务管理，并且一般用于事务共性的定义。
+当@Transactional描述方法时表示此方法要进行事务管理，假如类和方法上都有@Transactional注解，则方法上的注解一般用于事务特性的定义。
+@Transactional 常用属性应用说明：
+timeout	事务的超时时间，默认值为-1,表示没有超时显示。如果配置了具体时间,则超过该时间限制但事务还没有完成，则自动回滚事务。
+read-only	指定事务是否为只读事务，默认值为 false；为了忽略那些不需要事务的方法，比如读取数据，可以设置 read-only 为 true。
+rollback-for	用于指定能够触发事务回滚的异常类型，如果有多个异常类型需要指定，各类型之间可以通过逗号分隔。
+no-rollback- for	抛出 no-rollback-for 指定的异常类型，不回滚事务。
+isolation事务的隔离级别，默认值采用 DEFAULT。
+	 */
 	@Override
-	@RequiredLog
+	//@RequiredLog("用户:添加")
+	@Transactional(timeout = 30,
+               readOnly = false, 
+               isolation = Isolation.READ_COMMITTED,
+               rollbackFor = Throwable.class,
+               propagation = Propagation.REQUIRED)
 	public int saveObject(SysUser entity, Integer[] roleIds) {
 		long start=System.currentTimeMillis();
     	//log.info("start:"+start);
@@ -116,6 +140,7 @@ public class SysUserServiceImpl implements SysUserService {
 	}
 	@Override
 	@RequiredLog
+	@CacheEvict(value = "#entity.id")     //清空缓存   key 为id 
 	public int updateObject(SysUser entity, Integer[] roleIds) {
 		//1.参数有效性验证
 				if(entity==null)

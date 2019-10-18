@@ -46,12 +46,12 @@ public class SysLogAspect {//SysLogAspect.class
 	throws Throwable{
 		//1.记录目标方法开始执行时间
 		long t1=System.currentTimeMillis();
-		log.info("start time:"+t1);
+		//log.info("start time:"+t1);
 		//2.执行目标方法
 		Object result=joinPoint.proceed();//假如有下一个切面先执行切面对象方法
 		//3.记录目标方法结束执行时间
 		long t2=System.currentTimeMillis();
-		log.info("end time:"+t2);
+		//log.info("end time:"+t2);
 		//记录用户行为日志
 		saveLog(joinPoint,(t2-t1));
 		return result;

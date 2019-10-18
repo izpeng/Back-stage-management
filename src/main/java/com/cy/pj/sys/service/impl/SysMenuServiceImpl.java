@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.cy.pj.common.anno.RequiredLog;
 import com.cy.pj.common.exception.ServiceException;
 import com.cy.pj.common.vo.Node;
 import com.cy.pj.sys.dao.SysMenuDao;
@@ -29,6 +30,7 @@ public class SysMenuServiceImpl implements SysMenuService{
 		return list;
 	  }
 	@Override
+	@RequiredLog("菜单:删除")
 	public int deleteObject(Integer id) {
 		//1.验证数据的合法性
 				if(id==null||id<=0)
@@ -51,6 +53,7 @@ public class SysMenuServiceImpl implements SysMenuService{
 		return sysMenuDao.findZtreeMenuNodes();
 	}
 	@Override
+	//@RequiredLog("菜单:添加")
 	public int saveObject(SysMenu entity) {
 		//1.合法验证
 				if(entity==null)
@@ -69,6 +72,7 @@ public class SysMenuServiceImpl implements SysMenuService{
 				return rows;
 	}
 	@Override
+	//@RequiredLog("菜单:修改")
 	public int updateObject(SysMenu entity) {
 		//1.合法验证
 				if(entity==null)

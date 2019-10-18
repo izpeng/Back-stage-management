@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.cy.pj.common.anno.RequiredLog;
 import com.cy.pj.common.exception.ServiceException;
 import com.cy.pj.common.vo.Node;
 import com.cy.pj.sys.dao.SysDeptDao;
@@ -18,6 +19,7 @@ public class SysDeptServiceImpl implements SysDeptService {
 	@Autowired
 	private SysDeptDao sysDeptDao;
 	@Override
+	@RequiredLog("部门:查询")
 	public List<Map<String, Object>> findObjects() {
 		List<Map<String, Object>> list=
 		sysDeptDao.findObjects();
@@ -34,6 +36,7 @@ public class SysDeptServiceImpl implements SysDeptService {
 		return list;
 	}
 	@Override
+	//@RequiredLog("部门:修改")
 	public int updateObject(SysDept entity) {
 		//1.合法验证
 		if(entity==null)
@@ -53,6 +56,7 @@ public class SysDeptServiceImpl implements SysDeptService {
 	}
 	
 	@Override
+	//@RequiredLog("部门:添加")
 	public int saveObject(SysDept entity) {
 		//1.合法验证
 		if(entity==null)
@@ -67,6 +71,7 @@ public class SysDeptServiceImpl implements SysDeptService {
 		return rows;
 	}
 	@Override
+	@RequiredLog("部门:删除")
 	public int deleteObject(Integer id) {
 		//1.合法性验证
 		if(id==null||id<=0)

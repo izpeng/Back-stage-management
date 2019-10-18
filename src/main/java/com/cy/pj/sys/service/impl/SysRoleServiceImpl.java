@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.cy.pj.common.anno.RequiredLog;
 import com.cy.pj.common.exception.ServiceException;
 import com.cy.pj.common.vo.CheckBox;
 import com.cy.pj.common.vo.PageObject;
@@ -25,6 +26,7 @@ public class SysRoleServiceImpl implements SysRoleService {
 	private SysUserRoleDao sysUserRoleDao;
 	
 	@Override
+	@RequiredLog("角色:查询")
 	public PageObject<SysRole> findPageObjects(
 			String username,Integer pageCurrent) {
 		//1.对参数进行校验
@@ -44,6 +46,7 @@ public class SysRoleServiceImpl implements SysRoleService {
 		return new PageObject<>(pageCurrent, pageSize, rowCount, records);
 	}
 	@Override
+	@RequiredLog("角色:删除")
 	public int deleteObject(Integer id) {
 		//1.验证数据的合法性
 		if(id==null||id<=0)
@@ -59,6 +62,7 @@ public class SysRoleServiceImpl implements SysRoleService {
 		return rows;
 	}
 	@Override
+	//@RequiredLog("角色:添加")
 	public int saveObject(SysRole entity, Integer[] menuIds) {
 		//1.合法性验证
     	if(entity==null)

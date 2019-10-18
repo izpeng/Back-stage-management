@@ -28,3 +28,10 @@ mybatis:
 
 #lOG
 logging:  level:    com.cy: debug
+    
+async-thread-pool:
+       corePoolSize: 20
+       maximumPoolSize: 5
+       keepAliveTime: 30
+       queueCapacity: 50
+   
