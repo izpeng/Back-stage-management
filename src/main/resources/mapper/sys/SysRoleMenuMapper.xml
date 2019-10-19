@@ -2,6 +2,19 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cy.pj.sys.dao.SysRoleMenuDao">
+  <select id="findMenuIdsByRoleIds"
+         resultType="int">
+         select menu_id
+         from sys_role_menus
+         where role_id in 
+         <foreach collection="roleIds"
+                  open="("
+                  close=")"
+                  separator=","
+                  item="item">
+               #{item}
+         </foreach>
+</select>
 	<delete id="deleteObjectsByMenuId" parameterType="int">
 		delete from sys_role_menus
 		where menu_id=#{menuId}

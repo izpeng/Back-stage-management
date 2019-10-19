@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.crypto.hash.SimpleHash;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -31,7 +32,7 @@ public class SysUserServiceImpl implements SysUserService {
 	private SysUserRoleDao sysUserRoleDao;
 	@Override
 	@RequiredLog("用户:查询")
-	@Transactional(readOnly = true)
+	@Transactional(readOnly = false)
 	public PageObject<SysUserDeptVo> findPageObjects(String username, Integer pageCurrent) {
 		//1.对参数进行校验
 		if(pageCurrent==null||pageCurrent<1)
@@ -53,6 +54,7 @@ public class SysUserServiceImpl implements SysUserService {
 	
 	@Override
 	@RequiredLog("用户:禁用")
+	@RequiresPermissions("sys:user:valid")
 	@Cacheable(value = "userCache")   //返回结果cache   
 	public int validById(Integer id, Integer valid, String modifiedUser) {
 		//1.合法性验证
@@ -81,6 +83,7 @@ public class SysUserServiceImpl implements SysUserService {
 	 */
 	@Override
 	//@RequiredLog("用户:添加")
+	@RequiresPermissions("sys:user:add")
 	@Transactional(timeout = 30,
                readOnly = false, 
                isolation = Isolation.READ_COMMITTED,
@@ -140,6 +143,7 @@ public class SysUserServiceImpl implements SysUserService {
 	}
 	@Override
 	@RequiredLog
+	@RequiresPermissions("sys:user:update")
 	@CacheEvict(value = "#entity.id")     //清空缓存   key 为id 
 	public int updateObject(SysUser entity, Integer[] roleIds) {
 		//1.参数有效性验证
