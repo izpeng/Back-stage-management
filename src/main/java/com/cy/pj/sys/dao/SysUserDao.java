@@ -23,4 +23,5 @@ public interface SysUserDao {
 	
 	SysUserDeptVo findObjectById(Integer id);
 	int updateObject(SysUser entity);
+	SysUser findUserByUserName(String username);
 }

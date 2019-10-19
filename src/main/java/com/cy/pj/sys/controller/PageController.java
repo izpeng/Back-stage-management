@@ -30,4 +30,10 @@ public class PageController {
 	public String doModuleUI(@PathVariable String moduleUI) {
 			return "sys/"+moduleUI;
 	}
+	
+	@RequestMapping("doLoginUI")
+	public String doLoginUI(){
+			return "login";
+	}
+	
 }
