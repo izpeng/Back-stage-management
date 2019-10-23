@@ -12,15 +12,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import com.cy.pj.common.anno.RequiredLog;
+import com.cy.pj.common.annotation.RequiredLog;
 import com.cy.pj.common.util.IPUtils;
+import com.cy.pj.common.util.ShiroUtils;
 import com.cy.pj.sys.entity.SysLog;
 import com.cy.pj.sys.service.SysLogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Order(1)
+//@Order(1)
 @Slf4j
 @Aspect
 @Component
@@ -30,9 +31,10 @@ public class SysLogAspect {//SysLogAspect.class
 	//sysUserServiceImpl为spring容器中的一个bean的名字
 	//切入点表达式中的bean表达式
 	//@Pointcut("bean(sysUserServiceImpl)")
+	//@Pointcut("bean("*ServiceImpl")
 	//切入点表达式中的注解表达式
 	//由此注解描述的方法作为切入点.
-	@Pointcut("@annotation(com.cy.pj.common.anno.RequiredLog)")
+	@Pointcut("@annotation(com.cy.pj.common.annotation.RequiredLog)")
 	public void logPointCut() {}
 	
 	//@Around为一个环绕通知
@@ -46,12 +48,12 @@ public class SysLogAspect {//SysLogAspect.class
 	throws Throwable{
 		//1.记录目标方法开始执行时间
 		long t1=System.currentTimeMillis();
-		//log.info("start time:"+t1);
+		log.info("start time:"+t1);
 		//2.执行目标方法
 		Object result=joinPoint.proceed();//假如有下一个切面先执行切面对象方法
 		//3.记录目标方法结束执行时间
 		long t2=System.currentTimeMillis();
-		//log.info("end time:"+t2);
+		log.info("end time:"+t2);
 		//记录用户行为日志
 		saveLog(joinPoint,(t2-t1));
 		return result;
@@ -69,11 +71,11 @@ public class SysLogAspect {//SysLogAspect.class
 		String operation= getOperation(targetMethod);
 		//String params=Arrays.toString(joinPoint.getArgs());
 		//获取方法执行时的实际参数
-		String params=
+		String params=//借助了jackson中的api
 		new ObjectMapper().writeValueAsString(joinPoint.getArgs());
 		//2.封装日志信息
 	    SysLog sysLog=new SysLog(null,
-	    		"tmooc",//登录用户名
+	    		 ShiroUtils.getUsername(),//登录用户名
 	    		 operation,
 	    		 classMethodName, 
 	    		 params, 
@@ -81,7 +83,12 @@ public class SysLogAspect {//SysLogAspect.class
 	    		 IPUtils.getIpAddr(), 
 	    		 new Date());
 		//3.持久化日志信息
-		logService.insertObject(sysLog);
+//	    new Thread() {
+//	    	public void run() {
+//	    		logService.saveObject(sysLog);
+//	    	};
+//	    }.start();
+	    logService.saveObject(sysLog);
 	}
 
 	private String getOperation(Method targetMethod) {

@@ -9,18 +9,22 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
-import org.springframework.stereotype.Service;
-
-@Service
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+@Order(2)
 @Aspect
+@Component
 public class SysTimeAspect {
-	@Pointcut("bean(sysUserServiceImpl)")
+	//@Pointcut("bean(sysUserServiceImpl)")
+	//@Pointcut("bean(*ServiceImpl)")
+	@Pointcut("@annotation(com.cy.pj.common.annotation.RequiredLog)")
 	public void doTime(){}
-
+	
 	@Before("doTime()")
 	public void doBefore(JoinPoint jp){
 		System.out.println("time doBefore()");
 	}
+	
 	@After("doTime()")
 	public void doAfter(){
 		System.out.println("time doAfter()");
@@ -45,4 +49,5 @@ public class SysTimeAspect {
 		System.out.println("doAround.after");
 		return obj;
 	}
+
 }

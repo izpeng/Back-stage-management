@@ -19,7 +19,6 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.ByteSource;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -31,101 +30,115 @@ import com.cy.pj.sys.dao.SysUserRoleDao;
 import com.cy.pj.sys.entity.SysUser;
 
 @Service
-public class ShiroUserRealm extends AuthorizingRealm {
-
+public class ShiroUserRealm extends AuthorizingRealm{
 	@Autowired
 	private SysUserDao sysUserDao;
+//	@Override
+//	public void setCredentialsMatcher(CredentialsMatcher credentialsMatcher) {
+//		// TODO Auto-generated method stub
+//		//构建凭证匹配对象
+//		HashedCredentialsMatcher cMatcher=
+//				new HashedCredentialsMatcher();
+//		//设置加密算法
+//		cMatcher.setHashAlgorithmName("MD5");
+//		//设置加密次数
+//		cMatcher.setHashIterations(1);
+//		super.setCredentialsMatcher(cMatcher);
+//	}
+
+	@Override
+	public CredentialsMatcher getCredentialsMatcher() {
+		//构建凭证匹配对象
+		HashedCredentialsMatcher cMatcher=
+		new HashedCredentialsMatcher();
+		//设置加密算法
+		cMatcher.setHashAlgorithmName("MD5");
+		//设置加密次数
+		cMatcher.setHashIterations(1);
+		return cMatcher;
+	}
+	/**
+	 * 通过此方法获取用户认证信息,并进行封装,然后返回给
+	 *SecurityManager对象
+	 */
+	@Override
+	protected AuthenticationInfo doGetAuthenticationInfo(
+	   AuthenticationToken token) throws AuthenticationException {
+		//1.获取用户登录时提交用户信息
+		UsernamePasswordToken uToken=
+		(UsernamePasswordToken)token;
+		String username=uToken.getUsername();
+		//2.基于用户名查找用户
+		SysUser user=
+		sysUserDao.findUserByUserName(username);
+		//3.判定用户是否存在
+		if(user==null)
+			throw new UnknownAccountException();
+		//4.判定用户是否被禁用
+		if(user.getValid()==0)
+			throw new LockedAccountException();
+		//5.封装认证信息
+		ByteSource credentialsSalt=
+		ByteSource.Util.bytes(user.getSalt());
+		SimpleAuthenticationInfo info=
+		new SimpleAuthenticationInfo(
+				user,//principal 用户身份
+				user.getPassword(),//hashedCredentials
+				credentialsSalt, //credentialsSalt
+				getName());//realmName
+		return info;//返回给SecurityManager
+	}
 	@Autowired
 	private SysUserRoleDao sysUserRoleDao;
 	@Autowired
 	private SysRoleMenuDao sysRoleMenuDao;
 	@Autowired
 	private SysMenuDao sysMenuDao;
-	/**通过此方法完成授权信息的获取及封装*/
-	/**
-	 * 设置凭证匹配器(与用户添加操作使用相同的加密算法)
-	 */
+    /**
+          * 获取登录用户的权限信息并进行封装.
+     */
 	@Override
-	public void setCredentialsMatcher(
-			CredentialsMatcher credentialsMatcher) {
-		//构建凭证匹配对象
-		HashedCredentialsMatcher cMatcher=
-				new HashedCredentialsMatcher();
-		//设置加密算法
-		cMatcher.setHashAlgorithmName("MD5");
-		//设置加密次数
-		cMatcher.setHashIterations(1);
-		super.setCredentialsMatcher(cMatcher);
-	}
-	/**
-	 * 通过此方法完成认证数据的获取及封装,系统
-	 * 底层会将认证数据传递认证管理器，由认证
-	 * 管理器完成认证操作。
-	 */
-	@Override
-	protected AuthenticationInfo doGetAuthenticationInfo(
-			AuthenticationToken token) 
-					throws AuthenticationException {
-		//1.获取用户名(用户页面输入)
-		UsernamePasswordToken upToken=
-				(UsernamePasswordToken)token;
-		String username=upToken.getUsername();
-		//2.基于用户名查询用户信息
-		SysUser user=
-				sysUserDao.findUserByUserName(username);
-		//3.判定用户是否存在
-		if(user==null)
-			throw new UnknownAccountException();
-		//4.判定用户是否已被禁用。
-		if(user.getValid()==0)
-			throw new LockedAccountException();
-
-		//5.封装用户信息
-		ByteSource credentialsSalt=
-				ByteSource.Util.bytes(user.getSalt());
-		//记住：构建什么对象要看方法的返回值
-		SimpleAuthenticationInfo info=
-				new SimpleAuthenticationInfo(
-						user,//principal (身份)
-						user.getPassword(),//hashedCredentials
-						credentialsSalt, //credentialsSalt
-						getName());//realName
-		//6.返回封装结果
-		return info;//返回值会传递给认证管理器(后续
-		//认证管理器会通过此信息完成认证操作)
-	}
-	@Override
-	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-		//1.获取登录用户信息，例如用户id
+	protected AuthorizationInfo doGetAuthorizationInfo(
+			PrincipalCollection principals) {
+		System.out.println("==doGetAuthorizationInfo==");
+		//1.获取登录用户信息
 		SysUser user=(SysUser)principals.getPrimaryPrincipal();
-		Integer userId=user.getId();
-		//2.基于用户id获取用户拥有的角色(sys_user_roles)
+		//2.基于登录用户id获取角色id并进行校验.
 		List<Integer> roleIds=
-				sysUserRoleDao.findRoleIdsByUserId(userId);
+		sysUserRoleDao.findRoleIdsByUserId(user.getId());
 		if(roleIds==null||roleIds.size()==0)
 			throw new AuthorizationException();
-		//3.基于角色id获取菜单id(sys_role_menus)
-		Integer[] array={};
+		//3.基于角色id获取对应菜单id并进行校验
+		Integer[] array= {};
 		List<Integer> menuIds=
-				sysRoleMenuDao.findMenuIdsByRoleIds(
-						roleIds.toArray(array));
+		sysRoleMenuDao.findMenuIdsByRoleIds(
+				roleIds.toArray(array));
 		if(menuIds==null||menuIds.size()==0)
 			throw new AuthorizationException();
-		//4.基于菜单id获取权限标识(sys_menus)
+		//4.基于菜单id获取对应的菜单权限标识(permission)
 		List<String> permissions=
-				sysMenuDao.findPermissions(
-						menuIds.toArray(array));
-		//5.对权限标识信息进行封装并返回
-		Set<String> set=new HashSet<>();
-		for(String per:permissions){
-			if(!StringUtils.isEmpty(per)){
-				set.add(per);
+		sysMenuDao.findPermissions(menuIds.toArray(array));
+		if(permissions==null||permissions.size()==0)
+			throw new AuthorizationException();
+		//5.封装用户权限信息,并将此信息返回给SecurityManager
+		Set<String> stringPermissions=new HashSet<>();
+		for(String per:permissions) {
+			if(!StringUtils.isEmpty(per)) {
+				stringPermissions.add(per);
 			}
 		}
-		SimpleAuthorizationInfo info=
-				new SimpleAuthorizationInfo();
-		info.setStringPermissions(set);
-		return info;//返回给授权管理器
+		SimpleAuthorizationInfo info=new SimpleAuthorizationInfo();
+		info.setStringPermissions(stringPermissions);
+		return info;//返回给securityManager
 	}
 
 }
+
+
+
+
+
+
+
+
+

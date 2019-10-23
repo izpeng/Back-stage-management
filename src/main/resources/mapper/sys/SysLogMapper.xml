@@ -2,43 +2,62 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cy.pj.sys.dao.SysLogDao">
-
-	<sql id="queryWhereId">
-		<where>
-			<if test="username!=null and username!=''">
-				username like concat("%",#{username},"%")
-			</if>
-		</where>
-	</sql>
-
-	<select id="getRowCount" resultType="int">
-		select count(*)
-		from sys_Logs
-		<include refid="queryWhereId" />
-	</select>
-
-	<select id="findPageObjects"
-		resultType="com.cy.pj.sys.entity.SysLog">
-		select *
-		from sys_Logs
-		<include refid="queryWhereId" />
-		order by createdTime desc
-		limit #{startIndex},#{pageSize}
-	</select>
-
-
-	<delete id="deleteObjects">
-		delete from sys_Logs
-		<where>
-			<foreach collection="ids" item="id" >
-				or id=#{id}
-			</foreach>
-		</where>
-	</delete>
-<insert id="insertObject">
+   <insert id="insertObject">
        insert into sys_logs
        (username,operation,method,params,time,ip,createdTime)
        values
-(#{username},#{operation},#{method},#{params},#{time},#{ip},#{createdTime})
-</insert>
+       (#{username},#{operation},#{method},#{params},#{time},#{ip},#{createdTime})
+   </insert>
+   
+   <delete id="deleteObjects">
+       delete from sys_logs
+       <!-- 方案1(但是where条件后的in表达式性能相对较差)
+       where id in 
+       <foreach collection="ids"
+                open="("
+                close=")"
+                separator=","
+                item="id">
+            #{id}    
+       </foreach>
+        -->
+        <!--方案2 -->
+       <where>
+          <foreach collection="ids"
+                    item="id">
+                  or id=#{id} 
+          </foreach>
+       </where>
+   </delete>
+  
+   <sql id="queryWhereId">
+      from sys_logs
+      <where>
+           <if test="username!=null and username!=''">
+              username like concat("%",#{username},"%")
+           </if>
+      </where>
+   </sql>
+   
+   <!-- 分页查询当前页记录 -->
+   <select id="findPageObjects"
+           resultType="com.cy.pj.sys.entity.SysLog">
+          select *
+          <include refid="queryWhereId"/>
+          order by createdTime desc
+          limit #{startIndex},#{pageSize}   
+   </select>
+   <!-- 统计记录数 -->
+   <select id="getRowCount"
+           resultType="int">
+        select count(*)
+        <include refid="queryWhereId"/>
+   </select>
 </mapper>
+
+
+
+
+
+
+

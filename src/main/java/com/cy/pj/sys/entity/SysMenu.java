@@ -2,14 +2,10 @@ package com.cy.pj.sys.entity;
 
 import java.io.Serializable;
 import java.util.Date;
-
 import lombok.Data;
 @Data
 public class SysMenu implements Serializable{
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1032118300798232010L;
+	private static final long serialVersionUID = 6328149119720259896L;
 	private Integer id;
 	/**菜单名称*/
 	private String name;
@@ -31,4 +27,5 @@ public class SysMenu implements Serializable{
 	private String modifiedUser;
 	private Date createdTime;
 	private Date modifiedTime;
+
 }

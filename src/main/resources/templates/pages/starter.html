@@ -181,7 +181,7 @@ desired effect
               <!-- The user image in the navbar-->
               <img src="dist/img/user2-160x160.jpg" class="user-image" alt="User Image">
               <!-- hidden-xs hides the username on small devices so only the image appears. -->
-              <span class="hidden-xs">Alexander Pierce</span>
+              <span class="hidden-xs" id="loginUserId">Alexander Pierce</span>
             </a>
             <ul class="dropdown-menu">
               <!-- The user image in the menu -->
@@ -233,17 +233,17 @@ desired effect
     <!-- sidebar: style can be found in sidebar.less -->
     <section class="sidebar">
 
-      <!-- Sidebar user panel (optional) -->
+      <!-- Sidebar user panel (optional) 
       <div class="user-panel">
         <div class="pull-left image">
           <img src="dist/img/user2-160x160.jpg" class="img-circle" alt="User Image">
         </div>
         <div class="pull-left info">
           <p>Alexander Pierce</p>
-          <!-- Status -->
           <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
         </div>
       </div>
+      -->
 
 
       <!-- Sidebar Menu -->
@@ -420,22 +420,25 @@ desired effect
 <!-- AdminLTE App -->
 <script src="dist/js/adminlte.min.js"></script>
 <script type="text/javascript">
-//页面加载后执行
-$(function(){
+  $(function(){
     doLoadUI("load-log-id","log/log_list")
+    doLoadUI("load-menu-id","menu/menu_list")
     doLoadUI("load-role-id","role/role_list")
-     doLoadUI("load-menu-id","menu/menu_list")
-      doLoadUI("load-dept-id","dept/dept_list")
-       doLoadUI("load-user-id","user/user_list")
+    doLoadUI("load-dept-id","dept/dept_list")
+    doLoadUI("load-user-id","user/user_list")
+    doLoadUI("load-pwd-id","user/pwd_edit")
+    //呈现用户登录信息
+    $.getJSON("user/doGetLoginUser",function(result){
+    	if(result.state==1){
+    	$("#loginUserId").html(result.data.username);
+    	}
+    })
   })
   function doLoadUI(id,url){
     $("#"+id).click(function(){//callback
 	  $("#mainContentId").load(url);
     });
   }
-  
-
-  
 </script>
 </body>
 </html>

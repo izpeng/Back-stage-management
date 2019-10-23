@@ -1,5 +1,4 @@
 package com.cy.pj.sys.service.impl;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,152 +15,192 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.cy.pj.common.anno.RequiredLog;
+import com.cy.pj.common.annotation.RequiredLog;
 import com.cy.pj.common.exception.ServiceException;
+import com.cy.pj.common.util.ShiroUtils;
 import com.cy.pj.common.vo.PageObject;
 import com.cy.pj.sys.dao.SysUserDao;
 import com.cy.pj.sys.dao.SysUserRoleDao;
 import com.cy.pj.sys.entity.SysUser;
 import com.cy.pj.sys.service.SysUserService;
 import com.cy.pj.sys.vo.SysUserDeptVo;
+//1)@Service描述类表示要交给Spring管理
+//2)Spring会创建此类对象,并将对象存储到map容器
+//3)Spring Bean容器中的key默认为类名首字母小写.
 @Service
-public class SysUserServiceImpl implements SysUserService {
-	@Autowired
-	private SysUserDao sysUserDao;
-	@Autowired
-	private SysUserRoleDao sysUserRoleDao;
-	@Override
-	@RequiredLog("用户:查询")
-	@Transactional(readOnly = false)
-	public PageObject<SysUserDeptVo> findPageObjects(String username, Integer pageCurrent) {
-		//1.对参数进行校验
-		if(pageCurrent==null||pageCurrent<1)
-			throw new IllegalArgumentException("当前页码值无效");
-		//2.查询总记录数并进行校验
-		int rowCount=sysUserDao.getRowCount(username);
-		if(rowCount==0)
-			throw new ServiceException("没有找到对应记录");
-		//3.查询当前页记录
-		int pageSize=2;
-		int startIndex=(pageCurrent-1)*pageSize;
-		List<SysUserDeptVo> records=
-				sysUserDao.findPageObjects(username,
-						startIndex, pageSize);
-		//4.对查询结果进行封装并返回
-		return new PageObject<>(pageCurrent, pageSize, rowCount, records);
-	}
-	
-	
-	@Override
-	@RequiredLog("用户:禁用")
-	@RequiresPermissions("sys:user:valid")
-	@Cacheable(value = "userCache")   //返回结果cache   
-	public int validById(Integer id, Integer valid, String modifiedUser) {
-		//1.合法性验证
-				if(id==null||id<=0)
-				throw new ServiceException("参数不合法,id="+id);
-				if(valid!=1&&valid!=0)
-				throw new ServiceException("参数不合法,valie="+valid);
-				if(StringUtils.isEmpty(modifiedUser))
-				throw new ServiceException("修改用户不能为空");
-				//2.执行禁用或启用操作
-				int rows=sysUserDao.validById(id, valid, modifiedUser);
-				//3.判定结果,并返回
-				if(rows==0)
-				throw new ServiceException("此记录可能已经不存在");
-				return rows;
-	}
-	/**
-当@Transactional注解应用在类上时表示类中所有方法启动事务管理，并且一般用于事务共性的定义。
-当@Transactional描述方法时表示此方法要进行事务管理，假如类和方法上都有@Transactional注解，则方法上的注解一般用于事务特性的定义。
-@Transactional 常用属性应用说明：
-timeout	事务的超时时间，默认值为-1,表示没有超时显示。如果配置了具体时间,则超过该时间限制但事务还没有完成，则自动回滚事务。
-read-only	指定事务是否为只读事务，默认值为 false；为了忽略那些不需要事务的方法，比如读取数据，可以设置 read-only 为 true。
-rollback-for	用于指定能够触发事务回滚的异常类型，如果有多个异常类型需要指定，各类型之间可以通过逗号分隔。
-no-rollback- for	抛出 no-rollback-for 指定的异常类型，不回滚事务。
-isolation事务的隔离级别，默认值采用 DEFAULT。
-	 */
-	@Override
-	//@RequiredLog("用户:添加")
-	@RequiresPermissions("sys:user:add")
-	@Transactional(timeout = 30,
-               readOnly = false, 
+@Transactional(readOnly = false,
                isolation = Isolation.READ_COMMITTED,
-               rollbackFor = Throwable.class,
+               rollbackFor =Throwable.class,
+               timeout = 30,
                propagation = Propagation.REQUIRED)
-	public int saveObject(SysUser entity, Integer[] roleIds) {
-		long start=System.currentTimeMillis();
-    	//log.info("start:"+start);
-    	//1.参数校验
+public class SysUserServiceImpl implements SysUserService {
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private SysUserRoleDao sysUserRoleDao;
+    
+    
+    @Override
+	public int updatePassword(String password, String newPassword,
+     String cfgPassword) {
+		//1.判定新密码与密码确认是否相同
+		if(StringUtils.isEmpty(newPassword))
+		throw new IllegalArgumentException("新密码不能为空");
+		if(StringUtils.isEmpty(cfgPassword))
+		throw new IllegalArgumentException("确认密码不能为空");
+		if(!newPassword.equals(cfgPassword))
+		throw new IllegalArgumentException("两次输入的密码不相等");
+		//2.判定原密码是否正确
+		if(StringUtils.isEmpty(password))
+		throw new IllegalArgumentException("原密码不能为空");
+		//获取登陆用户
+		SysUser user=ShiroUtils.getUser();
+		SimpleHash sh=new SimpleHash("MD5",
+		password, user.getSalt(), 1);
+		if(!user.getPassword().equals(sh.toHex()))
+		throw new IllegalArgumentException("原密码不正确");
+		//3.对新密码进行加密
+		String salt=UUID.randomUUID().toString();
+		sh=new SimpleHash("MD5",newPassword,salt, 1);
+		//4.将新密码加密以后的结果更新到数据库
+		int rows=sysUserDao.updatePassword(sh.toHex(), salt,user.getId());
+		if(rows==0)
+		throw new ServiceException("修改失败");
+		return rows;
+	}
+    
+    //@Cacheable描述方法时，用于告诉spring框架，此方法的返回结果要进行cache
+    //userCache表示一个cache对象的名称
+    //key默认为方法的参数的组合
+    @Cacheable(value = "userCache")
+    @Transactional(readOnly = true)
+    @Override
+    public Map<String,Object> findObjectById(Integer id) {
+    	System.out.println("==findObjectById==");
+    	//1.参数有效性校验
+    	if(id==null||id<1)
+    		throw new IllegalArgumentException("id值无效");
+    	//2.基于id查询用户以及对应的部门信息
+    	SysUserDeptVo user=
+    	sysUserDao.findObjectById(id);
+    	if(user==null)
+    		throw new ServiceException("用户不存在");
+    	//3.查询用户对应的角色id
+    	List<Integer> roleIds=
+    	sysUserRoleDao.findRoleIdsByUserId(id);
+    	//4.封装两次查询结果
+    	Map<String,Object> map=new HashMap<>();
+    	map.put("user", user);
+    	map.put("roleIds", roleIds);
+    	
+    	return map;
+    }
+    //@CacheEvict表示清空缓存
+    //在本应用中清空cache中key为指定id的对象
+    //#entity.id表示获取参数entity对象的id值
+    @CacheEvict(value="userCache",
+    		    key = "#entity.id")
+    @Override
+    public int updateObject(SysUser entity, 
+    		Integer[] roleIds) {
+    	//1.参数检验
     	if(entity==null)
-    		throw new ServiceException("保存对象不能为空");
+    		throw new IllegalArgumentException("保存对象不能为空");
     	if(StringUtils.isEmpty(entity.getUsername()))
-    		throw new ServiceException("用户名不能为空");
-    	if(StringUtils.isEmpty(entity.getPassword()))
-    		throw new ServiceException("密码不能为空");
-    	if(roleIds==null || roleIds.length==0)
-    		throw new ServiceException("至少要为用户分配角色");
+    		throw new IllegalArgumentException("用户名不能为空");
+    	if(roleIds==null||roleIds.length==0)
+    		throw new ServiceException("必须为用户分配角色");
     	//2.保存用户自身信息
-        //2.1对密码进行加密
-    	String source=entity.getPassword();
-    	String salt=UUID.randomUUID().toString();
-    	SimpleHash sh=new SimpleHash(//Shiro框架
-    			"MD5",//algorithmName 算法
-    			 source,//原密码
-    			 salt, //盐值
-    			 1);//hashIterations表示加密次数
-    	entity.setSalt(salt);
-    	entity.setPassword(sh.toHex());
-    	int rows=sysUserDao.insertObject(entity);
-    	//3.保存用户角色关系数据
-    	sysUserRoleDao.insertObjects(entity.getId(), roleIds);
-    	long end=System.currentTimeMillis();
-    	//log.info("end:"+end);
-    	//log.info("total time :"+(end-start));
+    	int rows=sysUserDao.updateObject(entity);
+    	//3.保存用户和角色关系数据
+    	sysUserRoleDao.deleteObjectsByUserId(entity.getId());
+    	sysUserRoleDao.insertObjects(
+    			entity.getId(),roleIds);
     	//4.返回结果
     	return rows;
-	}
+    }
+    @RequiresPermissions("sys:user:save")
+    @Override
+    public int saveObject(SysUser entity, 
+    		Integer[] roleIds) {
+    	//1.参数检验
+    	if(entity==null)
+    		throw new IllegalArgumentException("保存对象不能为空");
+    	if(StringUtils.isEmpty(entity.getUsername()))
+    		throw new IllegalArgumentException("用户名不能为空");
+    	if(StringUtils.isEmpty(entity.getPassword()))
+    		throw new IllegalArgumentException("密码不能为空");
+    	if(roleIds==null||roleIds.length==0)
+    		throw new ServiceException("必须为用户分配角色");
+    	//2.保存用户自身信息
+    	//2.1对密码进行md5盐值加密
+    	//获取一个盐值,这个值使用随机的字符串
+    	String salt=UUID.randomUUID().toString();
+    	//借助shiro框架中的API对应密码进行盐值加密
+    	SimpleHash sh=new SimpleHash(
+    			"MD5",//algorithmName 算法名(MD5算法是一种消息摘要算法)
+    			entity.getPassword(),//source 未加密的密码
+    			salt,//盐
+    			1);//hashIterations表示加密次数
+    	//将加密结果转成16进制
+    	String pwd=sh.toHex();
+    	//2.2将盐值和密码存储SysUser对象
+    	entity.setSalt(salt);
+    	entity.setPassword(pwd);
+    	//2.3将SysUser对象持久化到数据库
+    	int rows=sysUserDao.insertObject(entity);
+    	//3.保存用户和角色关系数据
+    	sysUserRoleDao.insertObjects(entity.getId(),roleIds);
+    	//4.返回结果
+    	return rows;
+    }
+    /**
+     * @RequiresPermissions 告诉shiro框架
+          *  此方法的访问需要授权，此时系统底层对象
+       需要将"sys:user:update"提交给SecurityManager
+       ,这个对象会基于登录用户信息获得用户权限,然后
+       检测用户是否有访问这个资源的权限,假如有则授权访问
+       ,没有则抛出异常.
+     */
+    @RequiresPermissions("sys:user:update")
+    @RequiredLog("禁用启用")
+    @Override
+    public int validById(Integer id, 
+    		Integer valid, String modifiedUser) {
+    	//1.验证参数有效性
+    	if(id==null||id<1)
+    		throw new IllegalArgumentException("id值无效");
+    	if(valid==null||valid!=1&&valid!=0)
+    		throw new IllegalArgumentException("状态不正确");
+    	//...	
+    	//2.更新用户状态,并对其结果进行判定
+    	int rows=sysUserDao.validById(id, valid, modifiedUser);
+    	if(rows==0)
+    		throw new ServiceException("记录可能已经不存在");
+    	//3.返回结果
+    	return rows;
+    }
+    @Transactional(readOnly = true)
+    @RequiredLog("用户分页查询")
 	@Override
-	@RequiredLog
-	public Map<String, Object> findObjectById(Integer userId) {
-		//1.合法性验证
-		if(userId==null||userId<=0)
-		throw new ServiceException(
-		"参数数据不合法,userId="+userId);
-		//2.业务查询
-		SysUserDeptVo user=
-		sysUserDao.findObjectById(userId);
-		if(user==null)
-		throw new ServiceException("此用户已经不存在");
-		List<Integer> roleIds=
-		sysUserRoleDao.findRoleIdsByUserId(userId);
-		//3.数据封装
-		Map<String,Object> map=new HashMap<>();
-		map.put("user", user);
-		map.put("roleIds", roleIds);
-		return map;
-	}
-	@Override
-	@RequiredLog
-	@RequiresPermissions("sys:user:update")
-	@CacheEvict(value = "#entity.id")     //清空缓存   key 为id 
-	public int updateObject(SysUser entity, Integer[] roleIds) {
-		//1.参数有效性验证
-				if(entity==null)
-					throw new IllegalArgumentException("保存对象不能为空");
-				if(StringUtils.isEmpty(entity.getUsername()))
-					throw new IllegalArgumentException("用户名不能为空");
-				if(roleIds==null||roleIds.length==0)
-					throw new IllegalArgumentException("必须为其指定角色");
-				//其它验证自己实现，例如用户名已经存在，密码长度，...
-				//2.更新用户自身信息
-				int rows=sysUserDao.updateObject(entity);
-				//3.保存用户与角色关系数据
-				sysUserRoleDao.deleteObjectsByUserId(entity.getId());
-				sysUserRoleDao.insertObjects(entity.getId(),
-						roleIds);
-				//4.返回结果
-				return rows;
+	public PageObject<SysUserDeptVo> findPageObjects(String username, Integer pageCurrent) {
+    	System.out.println("user.thread.name:"+Thread.currentThread().getName());
+	    //1.参数校验
+		if(pageCurrent==null||pageCurrent<1)
+			throw new IllegalArgumentException("页码值不正确");
+		//2.统计总记录数并校验
+		int rowCount=
+		sysUserDao.getRowCount(username);
+		if(rowCount==0)
+			throw new ServiceException("记录不存在");
+		//3.查询当前页记录
+		int pageSize=3;
+		int startIndex=(pageCurrent-1)*pageSize;
+		List<SysUserDeptVo> records=
+		sysUserDao.findPageObjects(username,
+				startIndex, pageSize);
+		//4.封装查询结果
+		return new PageObject<>(pageCurrent, pageSize, rowCount, records);
 	}
 
 }

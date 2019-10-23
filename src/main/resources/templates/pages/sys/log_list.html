@@ -11,7 +11,7 @@
 
 						<div class="input-group-btn">
 							<button type="button" class="btn btn-default btn-search">
-								<i class="fa fa-search"></i>
+                                <i class="fa fa-search"></i>
 							</button>
 							<button type="button" class="btn btn-default btn-delete">删除</button>
 						</div>
@@ -23,7 +23,7 @@
 				<table class="table table-hover">
 					<thead>
 						<tr>
-							<th><input type="checkbox" id="checkAll">全选</th>
+						    <th><input type="checkbox" id="checkAll">全选</th>
 							<th>用户名</th>
 							<th>操作</th>
 							<th>请求方法</th>
@@ -33,21 +33,21 @@
 						</tr>
 					</thead>
 					<tbody id="tbodyId">
-						<tr>
-							<td colspan="7">数据正在加载中...</td>
-						</tr>
+					    <tr>
+					       <td colspan="7">数据正在加载中...</td>
+					    </tr>
 					</tbody>
 				</table>
 			</div>
-			<div id="pageId" class="box-footer clearfix"></div>
+			<div id="pageId" class="box-footer clearfix">
+			</div>
 			<!-- /.box-body -->
 		</div>
 		<!-- /.box -->
 	</div>
 </div>
 <script type="text/javascript">
-  
-$(function(){
+   $(function(){
 	   $("#pageId")
 	   .load("doPageUI",doGetObjects);
 	   //查询和修改按钮事件注册
@@ -62,9 +62,9 @@ $(function(){
 	   $("#tbodyId")
 	   .on("change",".cBox",
 			   doChangeTHeadCheckBoxState);
-})
-//修改thead中checkbox对象的状态
-function doChangeTHeadCheckBoxState(){
+   })
+   //修改thead中checkbox对象的状态
+   function doChangeTHeadCheckBoxState(){
 	   //1.定义一个初始状态值.
 	   var flag=true;
 	   //2.获取tbody中所有checkbox对象的状态值,
@@ -75,20 +75,20 @@ function doChangeTHeadCheckBoxState(){
 	   })
 	   //3.更新thead中checkbox的状态值
 	   $("#checkAll").prop("checked",flag);
-}
-
-
-//修改tbody中checkbox对应的状态
-function doChangeTBodyCheckBoxState(){
+   }
+   
+   
+   //修改tbody中checkbox对应的状态
+   function doChangeTBodyCheckBoxState(){
 	   //1.获取thead中全选checkbox对象的状态
 	   var flag=$(this).prop("checked");
 	   //2.设置tbody中checkbox对象的状态
 	   $("#tbodyId input[type='checkbox']")
 	   .prop("checked",flag);
-}
-
-//获取选中记录的id值
-function doGetCheckedIds(){
+   }
+   
+   //获取选中记录的id值
+   function doGetCheckedIds(){
 	   //1.定义一个数组,用户存储获取的记录id值
 	   var idArray=[];//new Array();
 	   //2.获取tbody中的所有checkbox对象
@@ -105,9 +105,9 @@ function doGetCheckedIds(){
 	   })
 	   //4.返回选中记录的id值
 	   return idArray;
-}
-//处理删除按钮业务
-function doDeleteObjects(){
+   }
+   //处理删除按钮业务
+   function doDeleteObjects(){
 	  //1.获取页面上用户选中的记录id,并进行判定.
 	  var idArray=doGetCheckedIds();
 	  if(idArray.length==0){
@@ -133,9 +133,9 @@ function doDeleteObjects(){
 			  alert(result.message);
 		  }
 	  })
-}
-//删除完成以后刷新页面
-function doRefreshPageAfterDelete(){
+   }
+   //删除完成以后刷新页面
+   function doRefreshPageAfterDelete(){
 	  //1.获取当前页码值,总页数
 	  var pageCurrent=
 		  $("#pageId").data("pageCurrent");
@@ -151,16 +151,16 @@ function doRefreshPageAfterDelete(){
 	  //假如查询文本框中有数据,则清空文本框数据
 	  $("#searchNameId").val("");
 	  doGetObjects();
-}
-
-function doQueryObjects(){
+   }
+   
+   function doQueryObjects(){
 	   //1.初始化当前页码值(每次从1开始)
 	   $("#pageId").data("pageCurrent",1);
 	   //2.执行查询
 	   doGetObjects();
-}
-//异步查询日志信息
-function doGetObjects(){
+   }
+   //异步查询日志信息
+   function doGetObjects(){
 	   //初始化全选checkbox对象的状态
 	   $("#checkAll").prop("checked",false);
 	   //1.定义请求参数
@@ -179,9 +179,9 @@ function doGetObjects(){
 	   //getJSON为JQUERY中的一个异步GET请求函数
 	   //语法:getJSON(url,[params],[callback])
 	   $.getJSON(url,params,doHandleResponseResult);
-}
-//处理响应结果(两种请求:正常,异常)
-function doHandleResponseResult(result){//JsonResult
+   }
+   //处理响应结果(两种请求:正常,异常)
+   function doHandleResponseResult(result){//JsonResult
 	   //debugger
 	   if(result.state==1){//ok
 		 //1.更能页面上tbody位置的数据(日志信息)
@@ -191,9 +191,9 @@ function doHandleResponseResult(result){//JsonResult
 	   }else{//error
 		  alert(result.message);
 	   }
-}
-//将服务端响应的日志信息,更新到tbody中
-function doSetTableBodyRows(records){
+   }
+   //将服务端响应的日志信息,更新到tbody中
+   function doSetTableBodyRows(records){
 	    //1.获取tbody对象,并清空原有内容
 	    var tBody=$("#tbodyId");
 	    tBody.empty();//jquery中清空数据的函数
@@ -208,8 +208,8 @@ function doSetTableBodyRows(records){
 	    	//4)将tr对象追加到tbody中
 	    	tBody.append(tr);
 	    }
-}
-function doCreateTds(data){
+   }
+   function doCreateTds(data){
 	   var tds="<td><input type='checkbox' class='cBox' name='cItem' value='"+data.id+"'></td>"+
 		   	 "<td>"+data.username+"</td>"+
 		     "<td>"+data.operation+"</td>"+
@@ -217,12 +217,11 @@ function doCreateTds(data){
 		     "<td>"+data.params+"</td>"+
 		     "<td>"+data.ip+"</td>"+
 		     "<td>"+data.time+"</td>";	   
-    return tds;
-}
+       return tds;
+   }
 
 //JS排错(console.log,debugger,排除法)
-</script>
-
+</script><!-- jquery,vue,react -->
 
 
 
